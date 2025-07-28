@@ -58,9 +58,21 @@ setInterval(() => {
   }
 }, TIME_INTERVAL);
 
+const allowedOrigins = [
+  "https://mesh-ochre.vercel.app",
+  "http://localhost:3000",
+];
+
 wss.on("connection", async (ws, req) => {
   if (!req.url) {
     ws.close(1008, "Missing request query");
+    return;
+  }
+
+  const origin = req.headers.origin;
+
+  if (!origin || !allowedOrigins.includes(origin)) {
+    ws.close(1008, "Origin not allowed");
     return;
   }
 
@@ -107,7 +119,7 @@ wss.on("connection", async (ws, req) => {
   });
 });
 
-const PORT = 8080;
+const PORT = process.env.PORT!
 
 server.listen(PORT, () => {
   console.log(`WebSocket server listening on ws://localhost:${PORT}`);
