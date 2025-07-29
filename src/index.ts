@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import { createServer } from "http";
 import { parse } from "url";
-import WebSocket, { WebSocketServer } from "ws";
+import { WebSocketServer } from "ws";
 
 dotenv.config();
 
@@ -11,13 +11,6 @@ const server = createServer();
 const wss = new WebSocketServer({ server });
 
 const concurrentConnectionsMap = new Map<string, number>();
-const connections = new Map<
-  WebSocket,
-  { userId: string; missedPing: number }
->();
-
-const MAX_MISSED_PINGS = 2;
-const TIME_INTERVAL = 10000;
 
 const markUserStatus = async (userId: string, status: "online" | "offline") => {
   try {
@@ -37,26 +30,6 @@ const markUserStatus = async (userId: string, status: "online" | "offline") => {
     console.error("WSS Error marking status :", error);
   }
 };
-
-// setInterval(() => {
-//   for (const [ws, { userId, missedPing }] of connections.entries()) {
-//     if (missedPing > MAX_MISSED_PINGS) {
-//       ws.terminate();
-//       connections.delete(ws);
-//       const count = concurrentConnectionsMap.get(userId) || 0;
-
-//       if (count - 1 <= 0) {
-//         concurrentConnectionsMap.delete(userId);
-//         markUserStatus(userId, "offline");
-//       } else {
-//         concurrentConnectionsMap.set(userId, count - 1);
-//       }
-//     } else {
-//       ws.ping();
-//       connections.set(ws, { userId, missedPing: missedPing + 1 });
-//     }
-//   }
-// }, TIME_INTERVAL);
 
 const allowedOrigins = [
   "https://mesh-ochre.vercel.app",
@@ -87,9 +60,23 @@ wss.on("connection", async (ws, req) => {
     return;
   }
 
-  connections.set(ws, { userId, missedPing: 0 });
-
   console.log(`[WSS] ${userId} connected`);
+
+  let isAlive = true;
+
+  const hearbeatInterval = setInterval(() => {
+    if (!isAlive) {
+      ws.close(4000, "No heartbeat");
+      return;
+    }
+
+    ws.ping();
+    isAlive = false;
+  }, 10000);
+
+  ws.on("pong", () => {
+    isAlive = true;
+  });
 
   const concurrentConnections = concurrentConnectionsMap.get(userId) || 0;
 
@@ -99,11 +86,8 @@ wss.on("connection", async (ws, req) => {
     markUserStatus(userId, "online");
   }
 
-  ws.on("pong", () => {
-    connections.set(ws, { userId, missedPing: 0 });
-  });
-
   ws.on("close", () => {
+    clearInterval(hearbeatInterval);
     const concurrentConnections = concurrentConnectionsMap.get(userId) || 1;
 
     const newCount = concurrentConnections - 1;
