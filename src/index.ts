@@ -38,25 +38,25 @@ const markUserStatus = async (userId: string, status: "online" | "offline") => {
   }
 };
 
-setInterval(() => {
-  for (const [ws, { userId, missedPing }] of connections.entries()) {
-    if (missedPing > MAX_MISSED_PINGS) {
-      ws.terminate();
-      connections.delete(ws);
-      const count = concurrentConnectionsMap.get(userId) || 0;
+// setInterval(() => {
+//   for (const [ws, { userId, missedPing }] of connections.entries()) {
+//     if (missedPing > MAX_MISSED_PINGS) {
+//       ws.terminate();
+//       connections.delete(ws);
+//       const count = concurrentConnectionsMap.get(userId) || 0;
 
-      if (count - 1 <= 0) {
-        concurrentConnectionsMap.delete(userId);
-        markUserStatus(userId, "offline");
-      } else {
-        concurrentConnectionsMap.set(userId, count - 1);
-      }
-    } else {
-      ws.ping();
-      connections.set(ws, { userId, missedPing: missedPing + 1 });
-    }
-  }
-}, TIME_INTERVAL);
+//       if (count - 1 <= 0) {
+//         concurrentConnectionsMap.delete(userId);
+//         markUserStatus(userId, "offline");
+//       } else {
+//         concurrentConnectionsMap.set(userId, count - 1);
+//       }
+//     } else {
+//       ws.ping();
+//       connections.set(ws, { userId, missedPing: missedPing + 1 });
+//     }
+//   }
+// }, TIME_INTERVAL);
 
 const allowedOrigins = [
   "https://mesh-ochre.vercel.app",
