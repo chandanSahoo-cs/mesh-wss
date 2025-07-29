@@ -76,6 +76,8 @@ wss.on("connection", async (ws, req) => {
     return;
   }
 
+  console.log("Origin: ", origin);
+
   const { query } = parse(req.url, true);
   const userId = query?.userId as string;
 
@@ -119,7 +121,7 @@ wss.on("connection", async (ws, req) => {
   });
 });
 
-const PORT = process.env.PORT!
+const PORT = process.env.PORT!;
 
 server.listen(PORT, () => {
   console.log(`WebSocket server listening on ws://localhost:${PORT}`);
