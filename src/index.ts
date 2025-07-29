@@ -61,6 +61,7 @@ setInterval(() => {
 const allowedOrigins = [
   "https://mesh-ochre.vercel.app",
   "http://localhost:3000",
+  "https://432203817ea7.ngrok-free.app",
 ];
 
 wss.on("connection", async (ws, req) => {
