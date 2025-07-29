@@ -34,7 +34,7 @@ const markUserStatus = async (userId: string, status: "online" | "offline") => {
       console.error(`WSS failed to mark ${status} :: ${res.status}`, body);
     }
   } catch (error) {
-    console.error("WSS Error marking offline :", error);
+    console.error("WSS Error marking status :", error);
   }
 };
 
